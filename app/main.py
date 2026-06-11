@@ -10,12 +10,12 @@ Usage:
 """
 
 import logging
-import sys
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
 from app.config import config  # module-level singleton
 
@@ -25,7 +25,6 @@ Logger = logging.getLogger(__name__)
 # ----------------------------------------------------------------------------
 # Helper: parse CORS_ORIGINS string into a list
 # ----------------------------------------------------------------------------
-
 
 def _parse_cors_origins(raw: str) -> list[str]:
     """Parse the CORS_ORIGINS Env variable into a List[str].
@@ -124,8 +123,9 @@ app = create_app()
 
 if __name__ == "__main__":
     # Set up logging for uvicorn
+    logging.basicConfig(listeners=["[var log logger]"])
     logging.basicConfig(
         level=getattr(logging, config.log_level, logging.INFO),
-        format="%(asctime)s [%(levelname)s%] %(message)s (%(filename)s:%(lineo)d)",
+        format="%(asctime)s [%(levelname)s)] %(message)s (%h(filename)s:%(lineno)d)",
     )
     uvicorn.run(app, host=config.host, port=config.port, log_level="info")
