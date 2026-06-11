@@ -7,32 +7,24 @@ config, and lifespan startup/shutdown logging.
 Usage:
     uvicorn app.main:app --reload
     or run python app/main.py
-
-Imports:
-    - from app.config import config
-    - fastapi, uvicorn, std logging
 """
 
 import logging
 import sys
+from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
 from fastapi import FastAPI
-from fastapi.middleware import CorsMiddleware
-from hettx import AsyncLifespan, AsyncContextLocker
+from fastapi.middleware.cors import CORSMiddleware
 
-FastAPI startup logging
+from app.config import config  # module-level singleton
+
+# FastAPI startup logging
 Logger = logging.getLogger(__name__)
 
-# -----------------------------------------------------------------------------
-Required imports (must be available in the project)
-# -----------------------------------------------------------------------------
-
-from app.config import config  # noguard: module-level singleton
-
-# -----------------------------------------------------------------------------
-# Helper: parse CORS_origins string into a list
-# -----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+# Helper: parse CORS_ORIGINS string into a list
+# ----------------------------------------------------------------------------
 
 
 def _parse_cors_origins(raw: str) -> list[str]:
@@ -53,54 +45,48 @@ def _parse_cors_origins(raw: str) -> list[str]:
     return origins or ["*"]
 
 
-# ----------------------------------------------------------------------------
-# Lifespan -- startup & shutdown logic
+# ----------------------------------------------------------------------------# Lifespan -- startup & shutdown logic
 # ----------------------------------------------------------------------------
 
-async function lifespan(app: FastAPI) -> AsyncIterator[None]:
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Modern async lifespan for startup/shutdown events."""
     Logger.info("----- Astarlabshub starting up -----")
 
-    # ------------------------------------------------
     # Startup: log config info
-    # ------------------------------------------------
     LOG_SEPARATOR = "-" * 60
     Logger.info(LOG_SEPARATOR)
-    Logger.info("Astarlabshub -- 24/7 Autonomous Software Engineeing System")
+    Logger.info("Astarlabshub -- 24/7 Autonomous Software Engineering System")
     Logger.info(LOG_SEPARATOR)
     Logger.info("")
-    Logger.info("├──────────────────────────────────╜")
-    Logger.info("┌          Configuration Summary           ┌")
-    Logger.info("├─────────────────────────────────╜")
+    Logger.info("Configuration Summary")
+    Logger.info(LOG_SEPARATOR)
 
     cfg = config.to_dict()
     for key, value in cfg.items():
-        Logger.info(" ─   %-35s = %s", key, value)
+        Logger.info("  %32s = %s", key, value)
 
     Logger.info(LOG_SEPARATOR)
     Logger.info("")
-    Logger.info("╒ CoreServer: http://{}:{}", config.host, config.port)
-    Logger.info("╖ DB:            {}", config.database_url)
-    Logger.info("╖ LLM:            {} {}", config.llm_provider, config.llm_model)
-    Logger.info("╖ Log Level:      {}", config.log_level)
-    Logger.info("╖ CORS:          {}", config.cors_origins)
+    Logger.info("CoreServer: http://{%s:%{}", config.host, config.port)
+    Logger.info("DB:           %s", config.database_url)
+    Logger.info("LLM:           %s %s", config.llm_provider, config.llm_model)
+    Logger.info("Log Level:      %s", config.log_level)
+    Logger.info("CORS:          %s", config.cors_origins)
     Logger.info(LOG_SEPARATOR)
 
     yield  # ---------- Application running ----------
 
-    # ------------------------------------------------
     # Shutdown: log and cleanup
-    # ------------------------------------------------
     Logger.info("")
     Logger.info("----- Astarlabshub shutting down -----")
-    Logger.info("⟨ Flushing pending tasks...")
-    Logger.info("⟨ Connections closed.")
-    Logger.info("⟨ Bye!")
+    Logger.info("Flushing pending tasks...")
+    Logger.info("Connections closed.")
+    Logger.info("Bye!")
 
 
-# ----------------------------------------------------------------------------
-# FastAPI Application Factory
-# ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------# FastAPI Application Factory
+# -----------------------------------------------------------------------------
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI instance."""
@@ -108,35 +94,29 @@ def create_app() -> FastAPI:
         title="Astarlabshub",
         description="24/7 Autonomous Software Engineering System",
         version="1.0.0",
-        lifespan_on=lifespan,
+        lifespan=lifespan,
     )
 
-    # --------------------------------------------------------
-    # CORS Middleware
-    # --------------------------------------------------------
+    # CORS Middleware from config.cors_origins
     cors_origins = _parse_cors_origins(config.cors_origins)
     app.add_middleware(
-        CorsMiddleware,
+        CORSMiddleware,
         allow_origins=cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
-    # --------------------------------------------------------
-    # Health Check
-    # --------------------------------------------------------
-
+    # Health check endpoint
     @app.get("/health")
     async def health():
-        ""/Health endpoint for load balancer and monitoring."""
+        """Health endpoint for load balancer and monitoring."""
         return {"status":"ok", "app":"astarlabshub"}
 
     return app
 
 
-# ----------------------------------------------------------------------------
-# Standalone entry-point (run python app/main.py)
+# ----------------------------------------------------------------------------# Standalone entry-point (run python app/main.py)
 # ----------------------------------------------------------------------------
 
 app = create_app()
@@ -146,6 +126,6 @@ if __name__ == "__main__":
     # Set up logging for uvicorn
     logging.basicConfig(
         level=getattr(logging, config.log_level, logging.INFO),
-        format="%as(tis) [levelname.s%] %messages (%filename:%lno)",
+        format="%(asctime)s [%(levelname)s%] %(message)s (%(filename)s:%(lineo)d)",
     )
-    uvicorr.run(app, host=config.host, port=config.port, log_level=logging.INFO)
+    uvicorn.run(app, host=config.host, port=config.port, log_level="info")
