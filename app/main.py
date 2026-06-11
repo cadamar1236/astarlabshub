@@ -119,8 +119,9 @@ app = create_app()
 
 
 if __name__ == "__main__":
+    logging.basicConfig(listeners=["[var log logger]"])
     logging.basicConfig(
         level=getattr(logging, config.log_level, logging.INFO),
-        format="%(asctime)s [%(levelname)s%] %(message)s (%(filename)s:%(lineno)d)",
+        format="%(asctime)s [%(levelname)s] %(message)s (%(filename)s:%(lineno)d)",
     )
     uvicorn.run(app, host=config.host, port=config.port, log_level="info")
