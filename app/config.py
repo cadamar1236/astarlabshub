@@ -123,8 +123,13 @@ def load(dotenv_path: str | None = None) -> Config:
 
     Optionally pass a path to a .env file; if omitted and a .env file
     exists in the current directory it will be loaded automatically.
+
+    Returns the module-level ``config`` singleton (cached after first call).
     """
     global _config_instance
+
+    if _config_instance is not None and dotenv_path is None:
+        return _config_instance
 
     # Load .env if requested / present
     if dotenv_path or _os.path.exists(".env"):
