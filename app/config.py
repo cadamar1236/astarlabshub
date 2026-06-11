@@ -15,7 +15,7 @@ Usage:
 """
 
 import os as _os
-from dataclasses import dataclass as _dataclass, field as _field
+from dataclasses import dataclass as _dataclass
 
 
 @_dataclass(frozen=True)
