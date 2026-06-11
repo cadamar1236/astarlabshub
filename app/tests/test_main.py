@@ -8,17 +8,16 @@ Three async tests using httpx.AsyncClient:
 """
 import pytest
 from httpx import ASGITransport, AsyncClient
-from typing import AsyncGenerator
 
 
 @pytest.fixture(scope="module")
-async def client() -> AsyncGenerator[AsyncClient, None]:
-    """Spin up the FastAPI app via ASGI (no real HTTP server) and yield an AsyncClient."""
+def client():
+    """Spin up the FastAPI app via ASGI and yield an AsyncClient (sync context manager)."""
     from app.main import create_app
 
     app = create_app()
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+    with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 
 
