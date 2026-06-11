@@ -6,18 +6,29 @@ Three async tests using httpx.AsyncClient:
   2) test_health_returns_200
   3) test_cors_headers_present
 """
+import asyncio
 import pytest
+import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from typing import AsyncGenerator
 
 
 @pytest.fixture(scope="module")
-def client():
-    """Spin up the FastAPI app via ASGI and yield an AsyncClient (sync context manager)."""
+def event_loop():
+    """Create a single event loop for the module scope."""
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest_asyncio.fixture(scope="module")
+async def client() -> AsyncGenerator[AsyncClient, None]:
+    """Spin up the FastAPI app via ASGI and yield an async AsyncClient."""
     from app.main import create_app
 
     app = create_app()
     transport = ASGITransport(app=app)
-    with AsyncClient(transport=transport, base_url="http://test") as ac:
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 
 
