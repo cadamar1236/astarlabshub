@@ -22,13 +22,11 @@ from app.config import config  # module-level singleton
 # FastAPI startup logging
 Logger = logging.getLogger(__name__)
 
-# ----------------------------------------------------------------------------
-# Helper: parse CORS_ORIGINS string into a list
+# ----------------------------------------------------------------------------# Helper: parse CORS_ORIGINS string into a list
 # ----------------------------------------------------------------------------
 
 def _parse_cors_origins(raw: str) -> list[str]:
     """Parse the CORS_ORIGINS Env variable into a List[str].
-
     Supports:
         - "*" (allows all)
         - comma-separated (e.g. "http://localhost:3000,https://mysite.com")
@@ -37,15 +35,14 @@ def _parse_cors_origins(raw: str) -> list[str]:
     if raw == "*":
         return ["*"]
     raw = raw.strip()
-    if not raw:
+    if not raw :
         return ["*"]
-    # Split by both comma and semicolon, dedup, strip
     origins = [s.strip() for s in raw.replace(";", ",").split(",") if s.strip()]
     return origins or ["*"]
 
 
 # ----------------------------------------------------------------------------# Lifespan -- startup & shutdown logic
-# ----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -67,8 +64,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     Logger.info(LOG_SEPARATOR)
     Logger.info("")
-    Logger.info("CoreServer: http://{%s:%{}", config.host, config.port)
-    Logger.info("DB:           %s", config.database_url)
+    Logger.info("CoreServer: http://%s:%d", config.host, config.port)
+    Logger.info("DB:            %s", config.database_url)
     Logger.info("LLM:           %s %s", config.llm_provider, config.llm_model)
     Logger.info("Log Level:      %s", config.log_level)
     Logger.info("CORS:          %s", config.cors_origins)
@@ -84,8 +81,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     Logger.info("Bye!")
 
 
-# ----------------------------------------------------------------------------# FastAPI Application Factory
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------# FastAPI Application Factory
+# ----------------------------------------------------------------------------
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI instance."""
@@ -122,10 +119,8 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    # Set up logging for uvicorn
-    logging.basicConfig(listeners=["[var log logger]"])
     logging.basicConfig(
         level=getattr(logging, config.log_level, logging.INFO),
-        format="%(asctime)s [%(levelname)s)] %(message)s (%h(filename)s:%(lineno)d)",
+        format="%(asctime)s [%(levelname)s%] %(message)s (%(filename)s:%(lineno)d)",
     )
     uvicorn.run(app, host=config.host, port=config.port, log_level="info")
