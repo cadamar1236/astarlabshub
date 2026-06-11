@@ -11,14 +11,14 @@ from httpx import ASGITransport, AsyncClient
 from typing import AsyncGenerator
 
 
-@pytest.fixture(scope="class")
-def client() -> AsyncGenerator[AsyncClient, None]:
+@pytest.fixture(scope="module")
+async def client() -> AsyncGenerator[AsyncClient, None]:
     """Spin up the FastAPI app via ASGI (no real HTTP server) and yield an AsyncClient."""
     from app.main import create_app
 
     app = create_app()
     transport = ASGITransport(app=app)
-    with AsyncClient(transport=transport, base_url="http://test") as ac:
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 
 
