@@ -119,7 +119,6 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    logging.basicConfig(listeners=["[var log logger]"])
     logging.basicConfig(
         level=getattr(logging, config.log_level, logging.INFO),
         format="%(asctime)s [%(levelname)s] %(message)s (%(filename)s:%(lineno)d)",
